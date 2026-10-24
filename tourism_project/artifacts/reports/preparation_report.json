@@ -1,0 +1,15 @@
+{
+    "created_at_utc": "2026-10-24T11:33:21.974468+00:00",
+    "source_file": "C:\\Users\\Yogesh Modekar\\Personal Data\\Learning\\Great Learning\\Introduction to MLOPs and Devops\\project assignment\\tour_project\\github_repo\\tourism_project\\data\\tourism.csv",
+    "original_rows": 4128,
+    "rows_after_cleaning": 4128,
+    "duplicates_removed": 0,
+    "rows_with_missing_values_removed": 0,
+    "training_rows": 3302,
+    "testing_rows": 826,
+    "feature_count_including_target": 20,
+    "target_distribution": {
+        "0": 3331,
+        "1": 797
+    }
+}
