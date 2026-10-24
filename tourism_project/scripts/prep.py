@@ -1,96 +1,101 @@
-"""
-Tourism MLOps - Data Preparation
-
-Expected project structure:
-tourism_project/
-    data/
-        tourism.csv
-    artifacts/
-        reports/
-        train.csv
-        test.csv
-    scripts/
-        register.py
-        prep.py
-
-Run from the project root:
-    python scripts/prep.py
-
-This script prepares data for model training. It does not train a model.
-"""
 
 from pathlib import Path
-from datetime import datetime, timezone
 import json
-import sys
+from datetime import datetime, timezone
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
 
-def resolve_project_directory() -> Path:
-    """Find the project root when run as a script or from Jupyter."""
-    if "__file__" in globals():
-        script_path = Path(__file__).resolve()
-        if script_path.parent.name.lower() == "scripts":
-            return script_path.parent.parent
+def main():
+    # Project root is the parent of the scripts directory.
+    project_dir = Path(__file__).resolve().parent.parent
 
-    current = Path.cwd().resolve()
-    for base in [current, *current.parents]:
-        direct = base / "tourism_project"
-        if (direct / "data").is_dir():
-            return direct
-
-        if base.name.lower() == "tourism_project" and (base / "data").is_dir():
-            return base
-
-        if base.name.lower() == "github_repo" and (base / "data").is_dir():
-            return base
-
-    return current
-
-
-def find_dataset(project_dir: Path) -> Path:
-    """Locate the dataset inside data/."""
-    data_dir = project_dir / "data"
-    if not data_dir.is_dir():
-        raise FileNotFoundError(f"Data directory not found: {data_dir}")
-
-    for filename in ("tourism.csv", "Tourism.csv"):
-        path = data_dir / filename
-        if path.is_file():
-            return path
-
-    csv_files = sorted(data_dir.glob("*.csv"))
-    if len(csv_files) == 1:
-        return csv_files[0]
-    if not csv_files:
-        raise FileNotFoundError(f"No CSV dataset found in {data_dir}")
-
-    raise ValueError(
-        "Multiple CSV files found. Keep the intended dataset named tourism.csv "
-        "or update find_dataset().\n" + "\n".join(map(str, csv_files))
-    )
-
-
-def prepare_data(project_dir: Path) -> dict:
-    """Clean, split, save datasets and write a preparation report."""
-    project_dir = project_dir.resolve()
-    dataset_path = find_dataset(project_dir)
+    data_path = project_dir / "data" / "tourism.csv"
     artifacts_dir = project_dir / "artifacts"
     reports_dir = artifacts_dir / "reports"
-    artifacts_dir.mkdir(parents=True, exist_ok=True)
+
     reports_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"Project directory: {project_dir}")
-    print(f"Loading dataset:   {dataset_path}")
+    if not data_path.exists():
+        raise FileNotFoundError(f"Dataset not found: {data_path}")
 
-    original_df = pd.read_csv(dataset_path)
-    original_df.columns = original_df.columns.astype(str).str.strip()
+    df = pd.read_csv(data_path)
+    original_rows = len(df)
 
-    if original_df.empty:
-        raise ValueError("Input dataset is empty.")
+    # Remove the index column, if present.
+    df = df.drop(
+        columns=[
+            col for col in ["Unnamed: 0", "index"]
+            if col in df.columns
+        ],
+        errors="ignore"
+    )
 
-    if "ProdTaken" not in original_df.columns:
+    # Remove duplicate records.
+    duplicate_count = int(df.duplicated().sum())
+    df = df.drop_duplicates().copy()
+
+    if "ProdTaken" not in df.columns:
+        raise ValueError("Required target column 'ProdTaken' is missing.")
+
+    # Remove records with missing values.
+    missing_rows = int(df.isna().any(axis=1).sum())
+    df = df.dropna().copy()
+
+    # Validate target values.
+    df["ProdTaken"] = pd.to_numeric(df["ProdTaken"], errors="raise")
+
+    if set(df["ProdTaken"].unique()) != {0, 1}:
         raise ValueError(
-            "Target column 'ProdTaken' is missing. "
+            "Target column 'ProdTaken' must contain both 0 and 1 only."
+        )
+
+    if df["ProdTaken"].value_counts().min() < 2:
+        raise ValueError(
+            "Not enough examples in the minority target class for a "
+            "stratified train/test split."
+        )
+
+    train_df, test_df = train_test_split(
+        df,
+        test_size=0.20,
+        random_state=42,
+        stratify=df["ProdTaken"]
+    )
+
+    artifacts_dir.mkdir(parents=True, exist_ok=True)
+
+    train_df.to_csv(artifacts_dir / "train.csv", index=False)
+    test_df.to_csv(artifacts_dir / "test.csv", index=False)
+
+    report = {
+        "created_at_utc": datetime.now(timezone.utc).isoformat(),
+        "source_file": str(data_path),
+        "original_rows": original_rows,
+        "rows_after_cleaning": len(df),
+        "duplicates_removed": duplicate_count,
+        "rows_with_missing_values_removed": missing_rows,
+        "training_rows": len(train_df),
+        "testing_rows": len(test_df),
+        "feature_count_including_target": len(df.columns),
+        "target_distribution": {
+            str(k): int(v)
+            for k, v in df["ProdTaken"].value_counts().items()
+        }
+    }
+
+    report_path = reports_dir / "preparation_report.json"
+    with open(report_path, "w", encoding="utf-8") as file:
+        json.dump(report, file, indent=4)
+
+    print("Data preparation completed successfully.")
+    print(f"Training data: {artifacts_dir / 'train.csv'}")
+    print(f"Testing data:  {artifacts_dir / 'test.csv'}")
+    print(f"Preparation report: {report_path}")
+    print(f"Training rows: {len(train_df)}")
+    print(f"Testing rows: {len(test_df)}")
+
+
+if __name__ == "__main__":
+    main()
