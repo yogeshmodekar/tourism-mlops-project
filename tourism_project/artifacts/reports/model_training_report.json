@@ -1,0 +1,80 @@
+{
+    "timestamp_utc": "2026-10-24T11:37:59.122411+00:00",
+    "target": "ProdTaken",
+    "model": "RandomForestClassifier",
+    "training_rows": 3302,
+    "testing_rows": 826,
+    "feature_columns": [
+        "CustomerID",
+        "Age",
+        "TypeofContact",
+        "CityTier",
+        "DurationOfPitch",
+        "Occupation",
+        "Gender",
+        "NumberOfPersonVisiting",
+        "NumberOfFollowups",
+        "ProductPitched",
+        "PreferredPropertyStar",
+        "MaritalStatus",
+        "NumberOfTrips",
+        "Passport",
+        "PitchSatisfactionScore",
+        "OwnCar",
+        "NumberOfChildrenVisiting",
+        "Designation",
+        "MonthlyIncome"
+    ],
+    "best_parameters": {
+        "model__max_depth": "None",
+        "model__min_samples_leaf": 2,
+        "model__min_samples_split": 5,
+        "model__n_estimators": 200
+    },
+    "metrics": {
+        "accuracy": 0.8861985472154964,
+        "precision": 0.8037383177570093,
+        "recall": 0.5408805031446541,
+        "f1_score": 0.6466165413533834,
+        "roc_auc": 0.94327364619577,
+        "best_cross_validation_f1": 0.6774719353676203
+    },
+    "classification_report": {
+        "0": {
+            "precision": 0.8984700973574409,
+            "recall": 0.9685157421289355,
+            "f1-score": 0.9321789321789322,
+            "support": 667.0
+        },
+        "1": {
+            "precision": 0.8037383177570093,
+            "recall": 0.5408805031446541,
+            "f1-score": 0.6466165413533834,
+            "support": 159.0
+        },
+        "accuracy": 0.8861985472154964,
+        "macro avg": {
+            "precision": 0.851104207557225,
+            "recall": 0.7546981226367948,
+            "f1-score": 0.7893977367661578,
+            "support": 826.0
+        },
+        "weighted avg": {
+            "precision": 0.8802348032212804,
+            "recall": 0.8861985472154964,
+            "f1-score": 0.8772099005309151,
+            "support": 826.0
+        }
+    },
+    "confusion_matrix": [
+        [
+            646,
+            21
+        ],
+        [
+            73,
+            86
+        ]
+    ],
+    "mlflow_run_id": "53ab7334d09f429d9349471d40ac9039"
+}
