@@ -1,0 +1,13 @@
+# Local MLflow tracking data
+tourism_project/mlruns/
+mlruns/
+# Application logs
+*.log
+# Python cache
+__pycache__/
+*.py[cod]
+# Jupyter checkpoints
+.ipynb_checkpoints/
+# Environment and secrets
+.venv/
+.env
